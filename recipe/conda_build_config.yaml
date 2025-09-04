@@ -9,9 +9,13 @@ hoomd:
 python:
   - 3.10.* *_cpython
   - 3.11.* *_cpython
+  - 3.12.* *_cpython
+  - 3.13.* *_cp313
 
 is_python_min:
   - true
+  - false
+  - false
   - false
 
 pybind11_abi:
