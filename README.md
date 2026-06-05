@@ -18,7 +18,6 @@ This project is primarily designed to enable access to HOOMD-blue for
 the PySAGES project. The package is built against representative
 HOOMD-blue releases from the v2 through v7 series.
 
-
 Current build status
 ====================
 

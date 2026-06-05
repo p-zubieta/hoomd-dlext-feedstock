@@ -1,0 +1,123 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/prefix-dev/recipe-format/main/schema.json
+context:
+  version: "0.6.0"
+  cuda_major: ${{ cuda_compiler_version | default("None") | replace("None", "0") | split(".") | first | int }}
+  hoomd_build: ${{ "cpu_*" if (cuda_compiler_version | default("None")) == "None" else "gpu_*" }}
+  variant: ${{ (hoomd | default("")) ~ "_" ~ ("cuda" ~ cuda_major ~ "_" if cuda_major != 0 else "") }}
+
+package:
+  name: hoomd-dlext
+  version: ${{ version }}
+
+source:
+  url: https://github.com/SSAGESLabs/hoomd-dlext/archive/refs/tags/v${{ version }}.tar.gz
+  sha256: e91f0317e53e683746db38640de6a5daa3b1fd5beb84ff96a01e1a81169c58ff
+
+build:
+  number: 4
+  string: ${{ variant }}py${{ python | version_to_buildstring }}_h${{ hash }}_${{ build_number }}
+  skip:
+    - win
+    - match(python, ">=3.11") and hoomd == "v2"
+    - match(python, ">=3.12") and hoomd == "v3"
+    - match(python, ">=3.14") and hoomd == "v4"
+    - hoomd in ["v2", "v3"] and cuda_compiler_version not in ["None", "11.8"]
+    - hoomd not in ["v2", "v3"] and cuda_compiler_version not in ["None", "12.9"]
+  script:
+    file: build.sh
+    env:
+      CUDA_MAJOR: ${{ cuda_major }}
+      HOOMD_TAG: ${{ hoomd }}
+      SETUPTOOLS_SCM_PRETEND_VERSION: ${{ version }}
+
+requirements:
+  build:
+    - if: hoomd in ["v2", "v3"]
+      then: cxx-compiler 1.5.2.*
+    - if: hoomd in ["v4", "v5"]
+      then: cxx-compiler 1.8.0.*
+    - if: hoomd in ["v6", "v7"]
+      then:
+        - ${{ compiler('cxx') }}
+        - ${{ stdlib('c') }}
+    - if: linux and cuda_compiler_version != "None"
+      then: ${{ compiler('cuda') }}
+    - if: osx and hoomd in ["v2", "v3"]
+      then: libcxx-devel 16.0.6.*
+    - cmake >=3.16,!=3.23.0
+    - make
+  host:
+    - python
+    - if: hoomd in ["v2", "v3", "v4"]
+      then: pybind11 <3
+    - if: hoomd in ["v5", "v6", "v7"]
+      then: pybind11
+    - pybind11-abi
+    - dlpack >=0.5
+    - if: hoomd in ["v3", "v4", "v5", "v6"]
+      then: eigen <5
+    - if: hoomd == "v7"
+      then: eigen
+    - if: hoomd == "v2"
+      then: hoomd ==2.9.7 ${{ hoomd_build }}
+    - if: hoomd == "v3"
+      then: hoomd ==3.11.0 ${{ hoomd_build }}
+    - if: hoomd == "v4"
+      then: hoomd ==4.9.1 ${{ hoomd_build }}
+    - if: hoomd == "v5"
+      then: hoomd ==5.4.0 ${{ hoomd_build }}
+    - if: hoomd == "v6"
+      then: hoomd ==6.1.1 ${{ hoomd_build }}
+    - if: hoomd == "v7"
+      then: hoomd ==7.0.1 ${{ hoomd_build }}
+    - setuptools-scm
+    - if: osx and hoomd == "v3"
+      then: tbb-devel <2022
+      else: tbb-devel
+    - if: linux and cuda_compiler_version == "11.8"
+      then: cudatoolkit ${{ cuda_compiler_version }}.*
+    # CUDA dependencies (we don't really need all of them, but HOOMD checks that they are present).
+    - if: linux and cuda_compiler_version not in ["None", "11.8"]
+      then:
+        - cuda-version ${{ cuda_compiler_version }}.*
+        - cuda-cudart-dev
+        - cuda-driver-dev
+        - cuda-nvrtc-dev
+        - cuda-profiler-api
+        - libcublas-dev
+        - libcufft-dev
+        - libcusolver-dev
+        - libcusparse-dev
+  run:
+    - python
+    - ${{ pin_compatible('hoomd', upper_bound='x.x') }}
+  ignore_run_exports:
+    from_package:
+      - tbb-devel
+
+tests:
+  # Build systems lack a working libcuda.so.1, so GPU builds cannot be tested, even on the CPU.
+  - if: cuda_compiler_version == "None"
+    then:
+      - python:
+          imports:
+            - hoomd.dlext
+          pip_check: false
+
+about:
+  homepage: https://github.com/SSAGESLabs/hoomd-dlext
+  license: MIT
+  license_file: LICENSE.md
+  summary: Wrapper for HOOMD-blue simulation data into DLPack data structures.
+  description: |
+    Provides access to HOOMD-blue simulation data on CPU or GPU via DLPack.
+    This project is primarily designed to enable access to HOOMD-blue for
+    the PySAGES project. The package is built against representative
+    HOOMD-blue releases from the v2 through v7 series.
+  documentation: https://github.com/SSAGESLabs/hoomd-dlext
+  repository: https://github.com/SSAGESLabs/hoomd-dlext
+
+extra:
+  recipe-maintainers:
+    - p-zubieta
+    - nrouizem
