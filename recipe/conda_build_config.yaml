@@ -6,14 +6,6 @@ hoomd:
   - v6
   - v7
 
-python:
-  - 3.10.* *_cpython
-  - 3.11.* *_cpython
-
-is_python_min:
-  - true
-  - false
-
 pybind11_abi:
   - 4
   - 4
@@ -23,9 +15,6 @@ pybind11_abi:
   - 11
 
 zip_keys:
-  -
-    - python
-    - is_python_min
   -
     - hoomd
     - pybind11_abi
