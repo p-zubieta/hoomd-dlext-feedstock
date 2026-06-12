@@ -32,14 +32,13 @@ build:
 
 requirements:
   build:
+    - ${{ stdlib('c') }}
     - if: hoomd in ["v2", "v3"]
       then: cxx-compiler 1.5.2.*
     - if: hoomd in ["v4", "v5"]
       then: cxx-compiler 1.8.0.*
     - if: hoomd in ["v6", "v7"]
-      then:
-        - ${{ compiler('cxx') }}
-        - ${{ stdlib('c') }}
+      then: ${{ compiler('cxx') }}
     - if: linux and cuda_compiler_version != "None"
       then: ${{ compiler('cuda') }}
     - if: osx and hoomd in ["v2", "v3"]
