@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/prefix-dev/recipe-format/main/schema.json
 context:
-  version: "0.6.0"
+  version: "0.7.0"
   cuda_major: ${{ cuda_compiler_version | default("None") | replace("None", "0") | split(".") | first | int }}
   hoomd_build: ${{ "cpu_*" if (cuda_compiler_version | default("None")) == "None" else "gpu_*" }}
   variant: ${{ (hoomd | default("")) ~ "_" ~ ("cuda" ~ cuda_major ~ "_" if cuda_major != 0 else "") }}
@@ -11,10 +11,10 @@ package:
 
 source:
   url: https://github.com/SSAGESLabs/hoomd-dlext/archive/refs/tags/v${{ version }}.tar.gz
-  sha256: e91f0317e53e683746db38640de6a5daa3b1fd5beb84ff96a01e1a81169c58ff
+  sha256: 187e1a9013a019bff90fbaec10f8a1be4d510eab164990db4849d894c9545d33
 
 build:
-  number: 4
+  number: 0
   string: ${{ variant }}py${{ python | version_to_buildstring }}_h${{ hash }}_${{ build_number }}
   skip:
     - win
